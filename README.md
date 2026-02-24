@@ -1,36 +1,82 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Mock OpenClaw Blog SaaS Demo
 
-## Getting Started
+A minimal Next.js demo to validate this integration pattern:
 
-First, run the development server:
+- Spec-style API endpoints
+- Bearer API key auth
+- Hosted `SKILL.md` to teach OpenClaw usage
+
+## Run
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+pnpm install
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open:
+- Home: http://localhost:3000
+- Playground: http://localhost:3000/playground
+- Skill doc: http://localhost:3000/SKILL.md
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Auth
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+All `/api/v1/*` endpoints require:
 
-## Learn More
+```text
+Authorization: Bearer sk-demo-openclaw-2026
+```
 
-To learn more about Next.js, take a look at the following resources:
+## API Endpoints
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- `POST /api/v1/search`
+- `POST /api/v1/generate`
+- `POST /api/v1/publish`
+- `GET /api/v1/status/:id`
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Response contract:
 
-## Deploy on Vercel
+```json
+{ "status": "ok|error", "data": {}, "error": null|{ "code": "...", "message": "..." } }
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## cURL Flow
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### 1) Search
+
+```bash
+curl -s -X POST http://localhost:3000/api/v1/search \
+  -H "Authorization: Bearer sk-demo-openclaw-2026" \
+  -H "Content-Type: application/json" \
+  -d '{"query":"AI SEO"}'
+```
+
+### 2) Generate
+
+```bash
+curl -s -X POST http://localhost:3000/api/v1/generate \
+  -H "Authorization: Bearer sk-demo-openclaw-2026" \
+  -H "Content-Type: application/json" \
+  -d '{"topic":"2026 AI 趋势","style":"deep","length":800,"language":"zh"}'
+```
+
+### 3) Publish
+
+```bash
+curl -s -X POST http://localhost:3000/api/v1/publish \
+  -H "Authorization: Bearer sk-demo-openclaw-2026" \
+  -H "Content-Type: application/json" \
+  -d '{"id":"gen_xxx","platform":"mock-blog"}'
+```
+
+### 4) Status
+
+```bash
+curl -s -X GET http://localhost:3000/api/v1/status/gen_xxx \
+  -H "Authorization: Bearer sk-demo-openclaw-2026"
+```
+
+## Notes
+
+- In-memory only (no DB).
+- No external service calls.
+- Restarting dev server resets generated/published data.
