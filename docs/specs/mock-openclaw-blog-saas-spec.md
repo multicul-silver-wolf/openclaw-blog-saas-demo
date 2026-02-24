@@ -11,7 +11,7 @@ Constraints (locked):
 
 ## 2) Demo Objective
 
-Show a full “search → generate → publish → status” flow with consistent JSON contract so agent-side integration is obvious.
+Show a full “search → generate → publish → status” flow + a hosted `SKILL.md` that teaches OpenClaw how to call the APIs with API key.
 
 ## 3) API Contract (Mocked)
 
@@ -84,16 +84,38 @@ Response:
 }
 ```
 
-## 4) Security Model (Mock)
+## 4) Security Model (Mock, hardcoded)
 
-- Accept `Authorization: Bearer demo-key`.
+- Hardcoded API key constant:
+  - `DEMO_API_KEY = "sk-demo-openclaw-2026"`
+- All `/api/v1/*` endpoints require:
+  - `Authorization: Bearer sk-demo-openclaw-2026`
 - If missing/invalid, return:
 ```json
 { "status": "error", "data": null, "error": { "code": "UNAUTHORIZED", "message": "Invalid API key" } }
 ```
 - This is only for integration behavior simulation.
 
-## 5) Data Model (in-memory)
+## 5) OpenClaw Skill Discovery Route
+
+To support this story:
+- user: "i want to teach openclaw how to use this demo"
+- openclaw: "read https://example/.../SKILL.md then know how to access apis with apikey"
+
+We provide a hosted skill document route:
+- `GET /SKILL.md`
+
+Implementation:
+- store file at `public/SKILL.md`
+- Next.js will serve it directly at `https://<demo-domain>/SKILL.md`
+
+`SKILL.md` content requirements:
+- clearly describe 4 endpoints (`search/generate/publish/status`)
+- include hardcoded demo key usage (`Authorization: Bearer sk-demo-openclaw-2026`)
+- include curl examples
+- include rules: always send auth header, parse `status/data/error`, handle `UNAUTHORIZED` and `NOT_FOUND`
+
+## 6) Data Model (in-memory)
 
 Use module-level stores:
 - `generatedPosts: Record<string, GeneratedPost>`
@@ -101,17 +123,19 @@ Use module-level stores:
 
 No DB, no persistence after restart.
 
-## 6) Frontend Pages
+## 7) Frontend Pages
 
-- `/` landing page: project intro + quick API examples.
+- `/` landing page: project intro + quick API examples + link to `/SKILL.md`
 - `/playground` interactive tester:
   - form inputs for search/generate/publish/status
   - request/response JSON panels
-  - prefilled auth token field
+  - prefilled auth token field (`sk-demo-openclaw-2026`)
 
-## 7) Folder Plan
+## 8) Folder Plan
 
 ```txt
+public/
+  SKILL.md
 src/
   app/
     page.tsx
@@ -124,9 +148,10 @@ src/
     mock-store.ts
     mock-auth.ts
     mock-types.ts
+    constants.ts   # DEMO_API_KEY
 ```
 
-## 8) Error Handling Standard
+## 9) Error Handling Standard
 
 All endpoints return:
 ```json
@@ -138,26 +163,29 @@ Validation errors:
 - `NOT_FOUND` for unknown ids.
 - `UNAUTHORIZED` for invalid token.
 
-## 9) Docs to include
+## 10) Docs to include
 
 - `docs/discussion/2026-02-24-grok-integration-notes.md` (raw discussion)
 - `docs/specs/mock-openclaw-blog-saas-spec.md` (this file)
-- `README.md` updates (run instructions + curl examples)
+- `public/SKILL.md` (OpenClaw-readable usage contract)
+- `README.md` updates (run instructions + curl examples + `/SKILL.md` URL)
 
-## 10) Delivery Phases
+## 11) Delivery Phases
 
-Phase A (now):
+Phase A (done):
 - Scaffold complete ✅
 - Discussion + spec docs ✅
 
 Phase B (next coding pass):
-- Implement mocked API routes
+- Implement mocked API routes with hardcoded key check
+- Create `public/SKILL.md`
 - Build playground UI
 - Add README curl examples
 
-## 11) Acceptance Criteria
+## 12) Acceptance Criteria
 
 - `pnpm dev` runs successfully.
-- 4 endpoints respond with the unified JSON schema.
-- Auth check works with `Bearer demo-key`.
+- 4 endpoints respond with unified JSON schema.
+- Auth check works only with `Bearer sk-demo-openclaw-2026`.
+- `/SKILL.md` is publicly accessible and instructive for OpenClaw integration.
 - Playground can complete full mocked flow without external dependencies.
